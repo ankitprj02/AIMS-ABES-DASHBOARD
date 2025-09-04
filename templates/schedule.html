@@ -26,15 +26,21 @@
         .navbar a:not(.active):hover { background-color: #f1f3f5; }
 
         h1 { text-align: center; margin-bottom: 25px; font-weight: 700; }
+
+        /* --- NEW: Wrapper to handle horizontal scrolling on mobile --- */
+        .schedule-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+            border: 1px solid var(--grid-border-color);
+            border-radius: 12px;
+            background-color: #fff;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+        }
         
         .schedule-grid {
             display: grid;
-            grid-template-columns: 100px repeat({{ days|length }}, 1fr); /* Time Column + Day Columns */
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.07);
-            border: 1px solid var(--grid-border-color);
-            overflow: hidden;
+            grid-template-columns: 100px repeat({{ days|length }}, minmax(160px, 1fr)); /* Time + Day Columns */
+            min-width: 900px; /* Ensures columns don't get too squished */
         }
 
         /* Headers */
@@ -49,11 +55,13 @@
         }
         .grid-header.time-header {
             border-right: 2px solid var(--grid-border-color);
+            position: sticky;
+            left: 0;
+            z-index: 1;
         }
 
         /* Cells */
         .grid-cell {
-            padding: 8px;
             border-top: 1px solid var(--grid-border-color);
             border-left: 1px solid var(--grid-border-color);
             min-height: 100px;
@@ -65,6 +73,10 @@
             padding-top: 15px;
             color: #6c757d;
             border-left: none;
+            position: sticky;
+            left: 0;
+            background-color: #fff; /* Ensure time is visible when scrolling */
+            z-index: 1;
         }
 
         /* Class Card */
@@ -106,43 +118,45 @@
 
         <h1>🕒 My Weekly Schedule</h1>
         
-        <div class="schedule-grid">
-            <div class="grid-header time-header">Time</div>
-            {% for day in days %}
-                <div class="grid-header">{{ day }}</div>
-            {% endfor %}
-
-            {% for period_time in periods %}
-                <div class="grid-cell time-cell">{{ period_time }}</div>
-                
+        <div class="schedule-wrapper">
+            <div class="schedule-grid">
+                <div class="grid-header time-header">Time</div>
                 {% for day in days %}
-                    {% set class_info = schedule.get(day, {}).get(period_time) %}
-                    {% if class_info %}
-                        <div class="grid-cell" style="grid-row: span {{ class_info.row_span }}; padding: 4px;">
-                             <div class="class-card" style="background-color: {{ colors[class_info.subject] }};">
-                                <strong>{{ class_info.subject.split(' / ')[2] | title if class_info.subject.split(' / ') | length > 2 else class_info.subject }}</strong>
-                                <p>{{ class_info.faculty }}</p>
-                                <p>{{ class_info.start_time }} - {{ class_info.end_time }}</p>
-                            </div>
-                        </div>
-                    {% else %}
-                        {# Check if this cell is covered by a multi-period class from above #}
-                        {% set is_covered = false %}
-                        {% for p_time in periods %}
-                           {% if p_time < period_time %}
-                                {% set prev_class = schedule.get(day, {}).get(p_time) %}
-                                {% if prev_class and (periods.index(period_time) < periods.index(p_time) + prev_class.row_span) %}
-                                    {% set is_covered = true %}
-                                {% endif %}
-                           {% endif %}
-                        {% endfor %}
-
-                        {% if not is_covered %}
-                            <div class="grid-cell"></div>
-                        {% endif %}
-                    {% endif %}
+                    <div class="grid-header">{{ day }}</div>
                 {% endfor %}
-            {% endfor %}
+
+                {% for period_time in periods %}
+                    <div class="grid-cell time-cell">{{ period_time }}</div>
+                    
+                    {% for day in days %}
+                        {% set class_info = schedule.get(day, {}).get(period_time) %}
+                        {% if class_info %}
+                            <div class="grid-cell" style="grid-row: span {{ class_info.row_span }}; padding: 4px;">
+                                 <div class="class-card" style="background-color: {{ colors[class_info.subject] }};">
+                                    <strong>{{ class_info.subject.split(' / ')[2] | title if class_info.subject.split(' / ') | length > 2 else class_info.subject }}</strong>
+                                    <p>{{ class_info.faculty }}</p>
+                                    <p>{{ class_info.start_time }} - {{ class_info.end_time }}</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            {# Check if this cell is covered by a multi-period class from above #}
+                            {% set is_covered = false %}
+                            {% for p_time in periods %}
+                               {% if p_time < period_time %}
+                                    {% set prev_class = schedule.get(day, {}).get(p_time) %}
+                                    {% if prev_class and (periods.index(period_time) < periods.index(p_time) + prev_class.row_span) %}
+                                        {% set is_covered = true %}
+                                    {% endif %}
+                               {% endif %}
+                            {% endfor %}
+
+                            {% if not is_covered %}
+                                <div class="grid-cell"></div>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
 </body>
