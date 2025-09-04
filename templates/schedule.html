@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Schedule</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --grid-border-color: #e9ecef;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8f9fa; 
+            margin: 0; 
+            padding: 20px; 
+            color: #212529;
+        }
+        .container { max-width: 95%; margin: auto; }
+        
+        .navbar { display: flex; justify-content: center; background-color: #fff; padding: 10px 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 25px; }
+        .navbar a { text-decoration: none; color: #333; padding: 10px 20px; font-weight: 500; border-radius: 8px; transition: all 0.3s ease; }
+        .navbar a.active { background-color: #0d6efd; color: white; box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3); }
+        .navbar a:not(.active):hover { background-color: #f1f3f5; }
+
+        h1 { text-align: center; margin-bottom: 25px; font-weight: 700; }
+        
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 100px repeat({{ days|length }}, 1fr); /* Time Column + Day Columns */
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+            border: 1px solid var(--grid-border-color);
+            overflow: hidden;
+        }
+
+        /* Headers */
+        .grid-header {
+            text-align: center;
+            padding: 15px 0;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid var(--grid-border-color);
+        }
+        .grid-header.time-header {
+            border-right: 2px solid var(--grid-border-color);
+        }
+
+        /* Cells */
+        .grid-cell {
+            padding: 8px;
+            border-top: 1px solid var(--grid-border-color);
+            border-left: 1px solid var(--grid-border-color);
+            min-height: 100px;
+        }
+        .time-cell {
+            font-weight: 500;
+            font-size: 0.9em;
+            text-align: center;
+            padding-top: 15px;
+            color: #6c757d;
+            border-left: none;
+        }
+
+        /* Class Card */
+        .class-card {
+            height: 100%;
+            width: 100%;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            font-size: 0.85em;
+        }
+        .class-card strong {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .class-card p {
+            margin: 2px 0 0;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="{{ url_for('show_attendance') }}">Attendance</a>
+            <a href="{{ url_for('show_schedule') }}" class="active">Schedule</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+
+        <h1>🕒 My Weekly Schedule</h1>
+        
+        <div class="schedule-grid">
+            <div class="grid-header time-header">Time</div>
+            {% for day in days %}
+                <div class="grid-header">{{ day }}</div>
+            {% endfor %}
+
+            {% for period_time in periods %}
+                <div class="grid-cell time-cell">{{ period_time }}</div>
+                
+                {% for day in days %}
+                    {% set class_info = schedule.get(day, {}).get(period_time) %}
+                    {% if class_info %}
+                        <div class="grid-cell" style="grid-row: span {{ class_info.row_span }}; padding: 4px;">
+                             <div class="class-card" style="background-color: {{ colors[class_info.subject] }};">
+                                <strong>{{ class_info.subject.split(' / ')[2] | title if class_info.subject.split(' / ') | length > 2 else class_info.subject }}</strong>
+                                <p>{{ class_info.faculty }}</p>
+                                <p>{{ class_info.start_time }} - {{ class_info.end_time }}</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        {# Check if this cell is covered by a multi-period class from above #}
+                        {% set is_covered = false %}
+                        {% for p_time in periods %}
+                           {% if p_time < period_time %}
+                                {% set prev_class = schedule.get(day, {}).get(p_time) %}
+                                {% if prev_class and (periods.index(period_time) < periods.index(p_time) + prev_class.row_span) %}
+                                    {% set is_covered = true %}
+                                {% endif %}
+                           {% endif %}
+                        {% endfor %}
+
+                        {% if not is_covered %}
+                            <div class="grid-cell"></div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

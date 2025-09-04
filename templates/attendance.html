@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: auto; }
+        h1, h2 { text-align: center; color: #1c1e21; }
+        h1 { margin-bottom: 15px; }
+        h2 { margin-top: 40px; margin-bottom: 20px; font-size: 1.5em; color: #444; }
+
+        .navbar { display: flex; justify-content: center; background-color: #fff; padding: 10px 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .navbar a { text-decoration: none; color: #333; padding: 10px 20px; font-weight: bold; border-radius: 8px; transition: background-color 0.3s, color 0.3s; }
+        .navbar a.active { background-color: #007bff; color: white; }
+        .navbar a:not(.active):hover { background-color: #f0f0f0; }
+
+        .overall-container { display: flex; justify-content: center; margin-bottom: 40px; }
+        .overall-container .card { width: 100%; max-width: 500px; border: 2px solid #007bff; }
+
+        .card-container { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; }
+        .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 20px; width: 380px; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        .card-header { border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 15px; }
+        .card-header h3 { margin: 0; font-size: 1.2em; color: #0056b3; }
+        .card-header p { margin: 5px 0 0; color: #666; font-size: 0.9em; }
+        .card-body { display: flex; align-items: center; gap: 20px; }
+        .chart-wrapper { width: 100px; height: 100px; position: relative; flex-shrink: 0; }
+        .chart-percentage { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; font-weight: bold; color: #333; }
+        .stats { flex-grow: 1; }
+        .stats p { margin: 8px 0; font-size: 1em; }
+        .stats .present { color: #28a745; }
+        .stats .absent { color: #dc3545; }
+        .card-footer { margin-top: auto; padding: 12px; border-radius: 8px; text-align: center; font-size: 0.95em; }
+        .card-footer.green { background-color: #e9f5ec; color: #28a745; }
+        .card-footer.red { background-color: #fbe9e7; color: #c62828; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="{{ url_for('show_attendance') }}" class="active">Attendance</a>
+            <a href="{{ url_for('show_schedule') }}">Schedule</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+
+        <h1>📊 Attendance Dashboard</h1>
+
+        {% if total_subject %}
+        <div class="overall-container">
+            <div class="card">
+                <div class="card-header"><h3>Overall Attendance Status</h3></div>
+                <div class="card-body">
+                    <div class="chart-wrapper">
+                        <canvas id="chart-overall"></canvas>
+                        <div class="chart-percentage">{{ total_subject.percent }}</div>
+                    </div>
+                    <div class="stats">
+                        <p><strong>Total Classes:</strong> {{ total_subject.total }}</p>
+                        <p class="present"><strong>Present:</strong> {{ total_subject.present }}</p>
+                        <p class="absent"><strong>Absent:</strong> {{ total_subject.absent }}</p>
+                    </div>
+                </div>
+                <div class="card-footer {{ total_subject.status_color }}">{{ total_subject.bunk_status | safe }}</div>
+            </div>
+        </div>
+        <script>
+            new Chart(document.getElementById('chart-overall'), { type: 'doughnut', data: { labels: ['Present', 'Absent'], datasets: [{ data: [{{ total_subject.present }}, {{ total_subject.absent }}], backgroundColor: ['#007bff', '#e0e0e0'], borderColor: '#fff', borderWidth: 2 }] }, options: { responsive: true, cutout: '75%', plugins: { legend: { display: false }, tooltip: { enabled: false } } } });
+        </script>
+        {% endif %}
+
+        <h2>Subject Wise Attendance</h2>
+
+        <div class="card-container">
+            {% for subj in individual_subjects %}
+                <div class="card">
+                    <div class="card-header">
+                        <h3>{{ subj.name }}</h3>
+                        <p>{{ subj.code }}</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-wrapper">
+                            <canvas id="chart-{{ loop.index }}"></canvas>
+                            <div class="chart-percentage">{{ subj.percent }}</div>
+                        </div>
+                        <div class="stats">
+                            <p><strong>Total:</strong> {{ subj.total }}</p>
+                            <p class="present"><strong>Present:</strong> {{ subj.present }}</p>
+                            <p class="absent"><strong>Absent:</strong> {{ subj.absent }}</p>
+                        </div>
+                    </div>
+                    <div class="card-footer {{ subj.status_color }}">{{ subj.bunk_status | safe }}</div>
+                </div>
+                <script>
+                    new Chart(document.getElementById('chart-{{ loop.index }}'), { type: 'doughnut', data: { labels: ['Present', 'Absent'], datasets: [{ data: [{{ subj.present }}, {{ subj.absent }}], backgroundColor: ['#28a745', '#dc3545'], borderColor: '#fff', borderWidth: 2 }] }, options: { responsive: true, cutout: '75%', plugins: { legend: { display: false }, tooltip: { enabled: false } } } });
+                </script>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
