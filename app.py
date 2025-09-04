@@ -6,6 +6,7 @@ from collections import defaultdict
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ankit-prajapati-secret-key'
 
@@ -190,6 +191,23 @@ def show_schedule():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+# This function makes variables available to all templates automatically
+@app.context_processor
+def inject_global_vars():
+    now = datetime.now()
+    # Academic session usually starts around July.
+    if now.month >= 7:
+        start_year = now.year
+        end_year = now.year + 1
+    else:
+        start_year = now.year - 1
+        end_year = now.year
+
+    return {
+        'author_name': "Ankit Prajapati",
+        'current_session': f"{start_year}-{end_year}"
+    }
 
 if __name__ == "__main__":
     app.run(debug=True)

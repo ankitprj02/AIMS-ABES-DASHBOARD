@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AIMS Dashboard{% endblock %}</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8f9fa; 
+            margin: 0; 
+            padding: 20px; 
+            color: #212529;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 95%; 
+            margin: auto;
+            flex-grow: 1; /* Allows the container to grow and push the footer down */
+        }
+        
+        .navbar { display: flex; justify-content: center; background-color: #fff; padding: 10px 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 25px; }
+        .navbar a { text-decoration: none; color: #333; padding: 10px 20px; font-weight: 500; border-radius: 8px; transition: all 0.3s ease; }
+        .navbar a.active { background-color: #0d6efd; color: white; box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3); }
+        .navbar a:not(.active):hover { background-color: #f1f3f5; }
+
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: 40px;
+            color: #6c757d;
+            font-size: 0.9em;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <a href="{{ url_for('show_attendance') }}" class="{{ 'active' if request.endpoint == 'show_attendance' else '' }}">Attendance</a>
+            <a href="{{ url_for('show_schedule') }}" class="{{ 'active' if request.endpoint == 'show_schedule' else '' }}">Schedule</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        &copy; {{ current_session }} <a href="https://www.linkedin.com/in/ankitprj02/" target="_blank">{{ author_name }}</a>. All Rights Reserved.
+    </footer>
+</body>
+</html>
