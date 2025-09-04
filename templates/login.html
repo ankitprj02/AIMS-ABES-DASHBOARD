@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>College Attendance Login</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        html, body { height: 100%; margin: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .login-container { background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         h1 { color: #333; margin-bottom: 25px; }
         .input-group { margin-bottom: 20px; text-align: left; }
@@ -14,6 +16,14 @@
         button { width: 100%; padding: 14px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
         button:hover { background-color: #0056b3; }
         .error { color: #d9534f; background-color: #f2dede; border: 1px solid #ebccd1; padding: 10px; border-radius: 8px; margin-top: 20px; }
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            color: #6c757d;
+            font-size: 0.9em;
+            width: 100%;
+            margin-top: auto; /* Pushes footer to the bottom */
+        }
     </style>
 </head>
 <body>
@@ -21,7 +31,7 @@
         <h1>📊 Attendance Login</h1>
         <form method="post">
             <div class="input-group">
-                <label for="username">Username (Admission No.)</label>
+                <label for="username">Username (Roll No.)</label>
                 <input type="text" id="username" name="username" required>
             </div>
             <div class="input-group">
@@ -34,5 +44,9 @@
             <div class="error">{{ error }}</div>
         {% endif %}
     </div>
+
+    <footer>
+        &copy; {{ current_session }} <a href="https://www.linkedin.com/in/ankitprj02/" target="_blank" style="color: #0d6efd; text-decoration: none;">{{ author_name }}</a>. All Rights Reserved.
+    </footer>
 </body>
 </html>
