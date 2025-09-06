@@ -34,7 +34,31 @@ def authenticate_and_get_token(username, password):
     except Exception as e:
         return (False, f"Authentication failed: {e}")
 
+# In app.py, find this function and update it
 def fetch_attendance_data(token):
+    """Fetches attendance and course data using a token."""
+    url = "https://abes.platform.simplifii.com/api/v1/custom/getCFMappedWithStudentID?embed_attendance_summary=1"
+    headers = {'Authorization': f"Bearer {token}"}
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        data = response.json().get("response", {}).get("data", [])
+        processed_subjects = []
+        for subj in data:
+            cdata = subj.get("cdata", {})
+            att = subj.get("attendance_summary", {})
+            processed_subjects.append({
+                'code': cdata.get("course_code", ""),
+                'name': cdata.get("course_name", "").replace("\r\n", " ").strip(),
+                'faculty': subj.get("faculty_name", "N/A"), # <-- ADD THIS LINE
+                'total': att.get("Total", 0),
+                'present': att.get("Present", 0),
+                'absent': att.get("Absent", att.get("Total", 0) - att.get("Present", 0)),
+                'percent': att.get("Percent", "0%")
+            })
+        return (True, processed_subjects)
+    except Exception as e:
+        return (False, f"Could not fetch attendance data: {e}")
     url = "https://abes.platform.simplifii.com/api/v1/custom/getCFMappedWithStudentID?embed_attendance_summary=1"
     headers = {'Authorization': f"Bearer {token}"}
     try:
@@ -104,7 +128,24 @@ def index():
     return redirect(url_for('login'))
 
 @app.route("/login", methods=["GET", "POST"])
+# In app.py, find the login function and update this one line
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if 'auth_token' in session:
+        return redirect(url_for('show_dashboard')) # Change this if you have an index
+    error = None
+    if request.method == "POST":
+        username = request.form['username']
+        password = request.form['password']
+        success, token_or_error = authenticate_and_get_token(username, password)
+        if success:
+            session['auth_token'] = token_or_error
+            return redirect(url_for('show_dashboard')) # <-- CHANGE THIS LINE
+        else:
+            error = token_or_error
+    return render_template('login.html', error=error)
+
+
     if 'auth_token' in session:
         return redirect(url_for('show_attendance'))
     error = None
@@ -191,6 +232,50 @@ def show_schedule():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+# In app.py, add this new function in the "Web Page Routes" section
+@app.route("/dashboard")
+def show_dashboard():
+    if 'auth_token' not in session:
+        return redirect(url_for('login'))
+    
+    # Fetch data for both attendance and schedule
+    att_success, att_data = fetch_attendance_data(session['auth_token'])
+    sch_success, sch_data = fetch_schedule_data(session['auth_token'])
+
+    if not att_success or not sch_success:
+        return render_template('error.html', message="Could not load all dashboard data.")
+
+    # Get overall attendance info
+    overall_attendance = next((s for s in att_data if s['code'].lower() == 'total'), None)
+    
+    # Get total number of courses
+    total_courses = len([s for s in att_data if s['code'].lower() != 'total'])
+
+    # Get today's schedule
+    today_day_name = datetime.now().strftime('%A')
+    todays_classes = sch_data.get(today_day_name, [])
+
+    return render_template('dashboard.html',
+                           overall_att=overall_attendance,
+                           total_courses=total_courses,
+                           todays_classes=todays_classes,
+                           today_name=today_day_name)
+
+# In app.py, add this new function
+@app.route("/courses")
+def show_courses():
+    if 'auth_token' not in session:
+        return redirect(url_for('login'))
+    
+    success, courses_or_error = fetch_attendance_data(session['auth_token'])
+    if not success:
+        return render_template('error.html', message=courses_or_error)
+
+    # Filter out the "Total" record as it's not a real course
+    course_list = [c for c in courses_or_error if c['code'].lower() != 'total']
+    
+    return render_template('courses.html', courses=course_list)
 
 # This function makes variables available to all templates automatically
 @app.context_processor

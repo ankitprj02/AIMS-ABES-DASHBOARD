@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<style>
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+    }
+    .card {
+        background-color: #fff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.07);
+        border: 1px solid #e9ecef;
+    }
+    .card h3 {
+        margin-top: 0;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 10px;
+        color: #343a40;
+    }
+    /* Attendance Card */
+    .attendance-percent {
+        font-size: 4em;
+        font-weight: 700;
+        color: #0d6efd;
+        text-align: center;
+        margin: 10px 0;
+    }
+    .attendance-status {
+        text-align: center;
+        font-size: 1em;
+        color: #6c757d;
+    }
+    /* Today's Schedule Card */
+    .schedule-list {
+        list-style: none;
+        padding: 0;
+    }
+    .schedule-list li {
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .schedule-list li:last-child {
+        border-bottom: none;
+    }
+    .schedule-time {
+        font-weight: 600;
+        display: block;
+    }
+    .no-classes {
+        text-align: center;
+        padding: 20px;
+        color: #6c757d;
+    }
+    /* Quick Links Card */
+    .quick-links a {
+        display: block;
+        padding: 12px;
+        background-color: #f8f9fa;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #212529;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .quick-links a:hover {
+        background-color: #e9ecef;
+        transform: translateX(5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-header">
+    <h1>Welcome to Your Dashboard</h1>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <h3>Overall Attendance</h3>
+        {% if overall_att %}
+            <div class="attendance-percent">{{ overall_att.percent }}</div>
+            <p class="attendance-status">
+                Total: {{ overall_att.total }} | Present: {{ overall_att.present }}
+            </p>
+        {% else %}
+            <p class="no-classes">Data not available.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>Today's Schedule ({{ today_name }})</h3>
+        {% if todays_classes %}
+            <ul class="schedule-list">
+            {% for class in todays_classes | sort(attribute='start_time') %}
+                <li>
+                    <span class="schedule-time">{{ class.start_time }} - {{ class.end_time }}</span>
+                    {{ class.subject.split(' / ')[2] | title if class.subject.split(' / ') | length > 2 else class.subject }}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-classes">🎉 No classes scheduled for today!</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>Quick Access</h3>
+        <div class="quick-links">
+            <a href="{{ url_for('show_attendance') }}">View Full Attendance Details</a>
+            <a href="{{ url_for('show_schedule') }}">View Full Weekly Schedule</a>
+            <a href="{{ url_for('show_courses') }}">View All My Courses ({{ total_courses }})</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

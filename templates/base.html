@@ -44,9 +44,16 @@
 </head>
 <body>
     <div class="container">
+        
         <nav class="navbar">
-            <a href="{{ url_for('show_attendance') }}" class="{{ 'active' if request.endpoint == 'show_attendance' else '' }}">Attendance</a>
-            <a href="{{ url_for('show_schedule') }}" class="{{ 'active' if request.endpoint == 'show_schedule' else '' }}">Schedule</a>
+            <a href="{{ url_for('show_dashboard') }}"
+                class="{{ 'active' if request.endpoint == 'show_dashboard' else '' }}">Dashboard</a>
+            <a href="{{ url_for('show_attendance') }}"
+                class="{{ 'active' if request.endpoint == 'show_attendance' else '' }}">Attendance</a>
+            <a href="{{ url_for('show_courses') }}" class="{{ 'active' if request.endpoint == 'show_courses' else '' }}">My
+                Courses</a>
+            <a href="{{ url_for('show_schedule') }}"
+                class="{{ 'active' if request.endpoint == 'show_schedule' else '' }}">Schedule</a>
             <a href="{{ url_for('logout') }}">Logout</a>
         </nav>
 
